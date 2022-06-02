@@ -42,6 +42,7 @@ jobs:
       - run:
           name: Run ansible playbook
           command: |
+            ls -l /tmp/ansible_<< pipeline.number >> && \
             cd /tmp/ansible_<< pipeline.number >> && \
             ansible-playbook -i inventory main-remote.yml
 
