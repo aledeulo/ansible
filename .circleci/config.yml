@@ -50,4 +50,6 @@ workflows:
   deploy-infrastructure-workflow:
     jobs:
       - create_aws_infrastructure
-      - run-ansible_playbooks
+      - run-ansible_playbooks:
+          requires:
+            - create_aws_infrastructure
