@@ -18,7 +18,9 @@ jobs:
           echo "[ec2-instances]" > inventory && \
           aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --output text >> inventory &&
+            --output text >> inventory
+      - run: |
+          yum install -y tar && \
           mkdir /tmp/ansible_<< pipeline.number >> && \
           mv inventory /tmp/ansible_<< pipeline.number >>/inventory && \
           cp ./deploy_cloud_formation/ansible/main-remote.yml /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>
