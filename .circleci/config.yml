@@ -14,7 +14,9 @@ jobs:
                 --template-file ./deploy_cloud_formation/cf_templates/resources.yml \
                 --stack-name services-stack-${CIRCLE_WORKFLOW_ID:0:5} \
                 --region us-east-1
-      - run: aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text
+      - run: | 
+          aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text > public_ips &&
+          cat public_ips
 
 workflows:
   deploy-infrastructure-workflow:
