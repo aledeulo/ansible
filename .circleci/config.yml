@@ -23,7 +23,8 @@ jobs:
           yum install -y tar gzip && \
           mkdir /tmp/ansible_<< pipeline.number >> && \
           mv inventory /tmp/ansible_<< pipeline.number >>/inventory && \
-          cp ./deploy_cloud_formation/ansible/main-remote.yml /tmp/ansible_<< pipeline.number >>
+          cp ./deploy_cloud_formation/ansible /tmp/ansible_<< pipeline.number >>/ansible && \
+          ls -l /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>/ansible
 
       - run:
           name: Rollback cloudformation stack on fail
@@ -38,7 +39,7 @@ jobs:
           root: /tmp/ansible_<< pipeline.number >>
           paths:
             - inventory
-            - main-remote.yml
+            - ansible
 
   run-ansible_playbooks:
     docker:
@@ -57,15 +58,7 @@ jobs:
           command: |
             ls -l /tmp/ansible_<< pipeline.number >> && \
             cd /tmp/ansible_<< pipeline.number >> && \
-            ansible-playbook -i inventory main-remote.yml
-      - run:
-          name: Rollback cloudformation stack on fail
-          command: |
-              stackName=$(aws cloudformation describe-stacks --query Stacks[0].StackName) && \
-              echo $(stackName) && \
-              aws cloudformation delete-stack --stack-name $(stackName) && \
-              echo "CloudFormation stack cleaning has being triggered. Please check!"
-          when: on_fail
+            ansible-playbook -i ansible/inventory ansible/main-remote.yml
 
 workflows:
   deploy-infrastructure-workflow:
