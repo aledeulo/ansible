@@ -15,10 +15,39 @@ jobs:
                 --stack-name services-stack-${CIRCLE_WORKFLOW_ID:0:5} \
                 --region us-east-1
       - run: | 
-          aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text > public_ips &&
-          cat public_ips
+          echo "[ec2-instances]" > inventory && \
+          aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text >> inventory &&
+          mkdir /tmp/ansible_<< pipeline.number >> && \
+          mv inventory /tmp/ansible_<< pipeline.number >>/inventory && \
+          cat /tmp/ansible_<< pipeline.number >>/inventory && \
+          cp ./ansible /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>
+      - persist_to_workspace:
+          root: /tmp/ansible_<< pipeline.number >>
+          paths:
+            - inventory
+
+  run-ansible_playbooks:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["ea:43:42:b3:40:5f:88:9b:e5:a5:53:6a:9b:d6:2b:64"]
+      - attach_workspace:
+          at: /tmp/ansible_<< pipeline.number >>
+      - run: 
+          name: Install dependencies
+          command: apk add --update ansible
+      - run:
+          name: Run ansible playbook
+          command: |
+            cd /tmp/ansible_<< pipeline.number >> && \
+            ansible-playbook -i inventory main-remote.yml
 
 workflows:
   deploy-infrastructure-workflow:
     jobs:
       - create_aws_infrastructure
+      - run-ansible_playbooks
