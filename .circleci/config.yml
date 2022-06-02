@@ -21,8 +21,7 @@ jobs:
             --output text >> inventory &&
           mkdir /tmp/ansible_<< pipeline.number >> && \
           mv inventory /tmp/ansible_<< pipeline.number >>/inventory && \
-          cat /tmp/ansible_<< pipeline.number >>/inventory && \
-          cp ./ansible /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>
+          cp ./deploy_cloud_formation/ansible/main-remote.yml /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>
       - persist_to_workspace:
           root: /tmp/ansible_<< pipeline.number >>
           paths:
