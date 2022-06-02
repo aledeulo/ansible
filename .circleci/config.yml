@@ -20,7 +20,7 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --output text >> inventory
       - run: |
-          yum install -y tar && \
+          yum install -y tar gzip && \
           mkdir /tmp/ansible_<< pipeline.number >> && \
           mv inventory /tmp/ansible_<< pipeline.number >>/inventory && \
           cp ./deploy_cloud_formation/ansible/main-remote.yml /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>
@@ -48,6 +48,19 @@ jobs:
             cd /tmp/ansible_<< pipeline.number >> && \
             ansible-playbook -i inventory main-remote.yml
 
+  rollback:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - run:
+          name: Rollback cloudformation stack on fail
+          command: |
+              stackName=$(aws cloudformation describe-stacks --query Stacks[0].StackName) && \
+              echo $(stackName) && \
+              aws cloudformation delete-stack --stack-name $(stackName) && \
+              echo "CloudFormation stack cleaning has being triggered. Please check!"
+          when: on_fail
+
 workflows:
   deploy-infrastructure-workflow:
     jobs:
@@ -55,3 +68,7 @@ workflows:
       - run-ansible_playbooks:
           requires:
             - create_aws_infrastructure
+
+  rollback_deployment:
+    jobs:
+      - rollback
