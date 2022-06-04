@@ -3,10 +3,13 @@ version: 2.1
 jobs:
   
   create_aws_infrastructure:
+    working_directory: ~/project_<< pipeline.number >>
     docker:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project_<< pipeline.number >>
       - run: 
           name: Create CloudFormation services
           command: |
@@ -18,30 +21,27 @@ jobs:
           echo "[ec2-instances]" > inventory && \
           aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --output text >> inventory
+            --output text >> inventory 
       - run: |
           yum install -y tar gzip && \
-          mkdir /tmp/ansible_<< pipeline.number >> && \
-          mv inventory /tmp/ansible_<< pipeline.number >>/inventory && \
-          cp ./deploy_cloud_formation/ansible /tmp/ansible_<< pipeline.number >>/ansible && \
-          ls -l /tmp/ansible_<< pipeline.number >> && ls -l /tmp/ansible_<< pipeline.number >>/ansible
+          mv inventory ./deploy_cloud_formation/ansible/inventory
 
-      - run:
-          name: Rollback cloudformation stack on fail
-          command: |
-              stackName=$(aws cloudformation describe-stacks --query Stacks[0].StackName) && \
-              echo $(stackName) && \
-              aws cloudformation delete-stack --stack-name $(stackName) && \
-              echo "CloudFormation stack cleaning has being triggered. Please check!"
-          when: on_fail
+      # - run:
+      #     name: Rollback cloudformation stack on fail
+      #     command: |
+      #         stackName=$(aws cloudformation describe-stacks --query Stacks[0].StackName) && \
+      #         echo $(stackName) && \
+      #         aws cloudformation delete-stack --stack-name $(stackName) && \
+      #         echo "CloudFormation stack cleaning has being triggered. Please check!"
+      #     when: on_fail
 
       - persist_to_workspace:
-          root: /tmp/ansible_<< pipeline.number >>
+          root: ~/project_<< pipeline.number >>
           paths:
-            - inventory
-            - ansible
+            - ./deploy_cloud_formation/ansible
 
   run-ansible_playbooks:
+    working_directory: ~/project_<< pipeline.number >>
     docker:
       - image: python:3.7-alpine3.11
     steps:
@@ -49,16 +49,16 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["ea:43:42:b3:40:5f:88:9b:e5:a5:53:6a:9b:d6:2b:64"]
       - attach_workspace:
-          at: /tmp/ansible_<< pipeline.number >>
+          at: ~/project_<< pipeline.number >>
       - run: 
           name: Install dependencies
           command: apk add --update ansible
       - run:
           name: Run ansible playbook
           command: |
-            ls -l /tmp/ansible_<< pipeline.number >> && \
-            cd /tmp/ansible_<< pipeline.number >> && \
-            ansible-playbook -i ansible/inventory ansible/main-remote.yml
+            ls -l && \
+            cd ./deploy_cloud_formation/ansible && \
+            ansible-playbook -i inventory main-remote.yml
 
 workflows:
   deploy-infrastructure-workflow:
