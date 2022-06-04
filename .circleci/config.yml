@@ -7,9 +7,7 @@ jobs:
     docker:
       - image: amazon/aws-cli
     steps:
-      - checkout
-      - attach_workspace:
-          at: ~/project_<< pipeline.number >>
+      - checkout      
       - run: 
           name: Create CloudFormation services
           command: |
@@ -26,14 +24,8 @@ jobs:
           yum install -y tar gzip && \
           mv inventory ./deploy_cloud_formation/ansible/inventory
 
-      # - run:
-      #     name: Rollback cloudformation stack on fail
-      #     command: |
-      #         stackName=$(aws cloudformation describe-stacks --query Stacks[0].StackName) && \
-      #         echo $(stackName) && \
-      #         aws cloudformation delete-stack --stack-name $(stackName) && \
-      #         echo "CloudFormation stack cleaning has being triggered. Please check!"
-      #     when: on_fail
+      - attach_workspace:
+          at: ~/project_<< pipeline.number >>
 
       - persist_to_workspace:
           root: ~/project_<< pipeline.number >>
