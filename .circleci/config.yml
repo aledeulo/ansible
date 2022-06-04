@@ -78,12 +78,9 @@ workflows:
   deploy-infrastructure-workflow:
     jobs:
       - create_aws_infrastructure
+      - smoke_test
+        requires: 
+          - create_aws_infrastructure
       # - run_ansible_playbooks:
       #     requires:
       #       - create_aws_infrastructure
-  
-  smock-tests-workflow:
-    jobs:
-      - smoke_test
-          requires: 
-            - create_aws_infrastructure
