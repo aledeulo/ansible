@@ -1,5 +1,9 @@
 version: 2.1
 
+aws_docker_image:
+  docker:
+      - image: amazon/aws-cli
+
 commands:
   
   destroy_environment:
@@ -8,15 +12,39 @@ commands:
           name: Destroy environment
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} && \
-            echo "CloudFormation stack cleaning has being triggered. Please check!"
+            aws cloudformation delete-stack --stack-name services-stack-${CIRCLE_WORKFLOW_ID:0:5} && \
+            echo "CloudFormation stack cleaning has being triggered. Please check!" && \
+            aws cloudformation delete-stack --stack-name bucket-stack-${CIRCLE_WORKFLOW_ID:0:5} && \
+            echo "CloudFormation clean s3 stack triggered"  && \
+            aws cloudformation delete-stack --stack-name cloudfront-${CIRCLE_WORKFLOW_ID:0:5} && \
+            echo "CloudFormation clean CloudFront stack"
 
 jobs:
+
+  create_aws_s3_buckets:
+    <<: *aws_docker_image
+    working_directory: ~/project_${CIRCLE_WORKFLOW_ID}
+    steps:
+      - checkout
+      -run:
+        name: Deploy S3 bucket
+        command: |
+           aws cloudformation deploy \
+                --template-file ./deploy_cloud_formation/cf_templates/bucket.yml \
+                --stack-name bucket-stack-${CIRCLE_WORKFLOW_ID:0:5} \
+                --parameter-overrides NAME="my-bucket-${CIRCLE_WORKFLOW_ID}" \
+                --region us-east-1
+      - run:
+          name: Copy files
+          command: |
+              aws s3 sync ./deploy_cloud_formation/cf_templates/index.html s3://"my-bucket-${CIRCLE_WORKFLOW_ID}" --delete
+
+       - attach_workspace:
+          at: ~/project_${CIRCLE_WORKFLOW_ID}
   
-  create_aws_infrastructure:
-    working_directory: ~/project_<< pipeline.number >>
-    docker:
-      - image: amazon/aws-cli
+  create_aws_instance:
+    working_directory: ~/project_${CIRCLE_WORKFLOW_ID}
+    <<: *aws_docker_image
     steps:
       - checkout      
       - run: 
@@ -35,15 +63,27 @@ jobs:
           yum install -y tar gzip
 
       - attach_workspace:
-          at: ~/project_<< pipeline.number >>
+          at: ~/project_${CIRCLE_WORKFLOW_ID}
 
       - persist_to_workspace:
-          root: ~/project_<< pipeline.number >>
+          root: ~/project_${CIRCLE_WORKFLOW_ID}
           paths:
             - ./
 
+  create_cloudfront_service:
+    <<: *aws_docker_image
+    steps:
+      - checkout
+      - run:
+          name: Deploy CloudFront to change router
+          command: |
+              aws cloudformation deploy \
+              --template-file ./deploy_cloud_formation/cf_templates/cloudfront.yml \
+              --stack-name cloudfront-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides PipelineID="my-cf-dist-${CIRCLE_WORKFLOW_ID}"
+
   run_ansible_playbooks:
-    working_directory: ~/project_<< pipeline.number >>
+    working_directory: ~/project_${CIRCLE_WORKFLOW_ID}
     docker:
       - image: python:3.7-alpine3.11
     steps:
@@ -51,7 +91,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["ea:43:42:b3:40:5f:88:9b:e5:a5:53:6a:9b:d6:2b:64"]
       - attach_workspace:
-          at: ~/project_<< pipeline.number >>
+          at: ~/project_${CIRCLE_WORKFLOW_ID}
       - run: 
           name: Install dependencies
           command: apk add --update ansible
@@ -62,8 +102,7 @@ jobs:
       - destroy_environment
 
   smoke_test:
-    docker:
-      - image: amazon/aws-cli
+    <<: *aws_docker_image
     steps:
       - run:
           name: smoke test
@@ -71,9 +110,12 @@ jobs:
       - destroy_environment 
 
 workflows:
-  deploy-infrastructure-workflow:
+  deploy-aws-resources-workflow:
     jobs:
-      - create_aws_infrastructure
-      - smoke_test:
+      - create_aws_s3_buckets
+      - create_aws_cloudfront:
           requires:
-            - create_aws_infrastructure
+            - create_aws_s3_buckets
+      - create_aws_instance:
+          requires:
+            - create_aws_s3_buckets
