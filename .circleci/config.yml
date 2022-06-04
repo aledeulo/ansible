@@ -1,9 +1,5 @@
 version: 2.1
 
-orbs:
-  aws-cli: circleci/aws-cli@2.0.3
-
-  # Exercise - Rollback
 commands:
   
   destroy_environment:
@@ -81,6 +77,3 @@ workflows:
       - smoke_test
           requires:
             - create_aws_infrastructure
-      # - run_ansible_playbooks:
-      #     requires:
-      #       - create_aws_infrastructure
