@@ -79,7 +79,7 @@ workflows:
     jobs:
       - create_aws_infrastructure
       - smoke_test
-          requires: 
+          requires:
             - create_aws_infrastructure
       # - run_ansible_playbooks:
       #     requires:
