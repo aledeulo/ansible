@@ -74,6 +74,6 @@ workflows:
   deploy-infrastructure-workflow:
     jobs:
       - create_aws_infrastructure
-      - smoke_test
+      - smoke_test:
           requires:
             - create_aws_infrastructure
