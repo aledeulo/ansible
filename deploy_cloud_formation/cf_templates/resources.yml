@@ -1,5 +1,6 @@
+# Exercise - Rollback
 AWSTemplateFormatVersion: 2010-09-09
-Description: Deploy my services for Udacity
+Description: Udacity course
 Resources:
   EC2Instance:
     Type: 'AWS::EC2::Instance'

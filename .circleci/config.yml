@@ -36,7 +36,7 @@ jobs:
       - run:
           name: Copy files
           command: |
-              aws s3 sync . s3://"my-bucket-${CIRCLE_WORKFLOW_ID}" --delete
+              aws s3 sync deploy_cloud_formation/cf_templates/index.html s3://"my-bucket-${CIRCLE_WORKFLOW_ID}" --delete
 
 
   
@@ -48,6 +48,7 @@ jobs:
       - run: 
           name: Create CloudFormation services
           command: |
+              ls -l && \
              aws cloudformation deploy \
                 --template-file ./deploy_cloud_formation/cf_templates/resources.yml \
                 --stack-name services-stack-${CIRCLE_WORKFLOW_ID:0:5} \
@@ -110,10 +111,11 @@ jobs:
 workflows:
   deploy-aws-resources-workflow:
     jobs:
-      - create_aws_s3_buckets
-      - create_cloudfront_service:
-          requires:
-            - create_aws_s3_buckets
-      - create_aws_instance:
-          requires:
-            - create_aws_s3_buckets
+      - create_cloudfront_service
+      # - create_aws_s3_buckets
+      # - create_cloudfront_service:
+      #     requires:
+      #       - create_aws_s3_buckets
+      # - create_aws_instance:
+      #     requires:
+      #       - create_aws_s3_buckets
