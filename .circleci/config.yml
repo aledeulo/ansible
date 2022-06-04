@@ -48,9 +48,8 @@ jobs:
       - run:
           name: Run ansible playbook
           command: |
-            ls -l && \
             cd ./deploy_cloud_formation/ansible && \
-            ansible-playbook -i inventory main-remote.yml
+            ls- l && ansible-playbook -i inventory main-remote.yml
 
 workflows:
   deploy-infrastructure-workflow:
