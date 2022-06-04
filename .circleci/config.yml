@@ -41,7 +41,6 @@ jobs:
 
   
   create_aws_instance:
-    working_directory: ~/project_${CIRCLE_WORKFLOW_ID}
     <<: *aws_docker_image
     steps:
       - checkout      
