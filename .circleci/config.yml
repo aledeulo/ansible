@@ -36,7 +36,7 @@ jobs:
       - run:
           name: Copy files
           command: |
-              aws s3 sync ./deploy_cloud_formation/cf_templates/index.html s3://"my-bucket-${CIRCLE_WORKFLOW_ID}" --delete
+              aws s3 sync . s3://"my-bucket-${CIRCLE_WORKFLOW_ID}" --delete
 
 
   
