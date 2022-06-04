@@ -111,7 +111,7 @@ workflows:
   deploy-aws-resources-workflow:
     jobs:
       - create_aws_s3_buckets
-      - create_aws_cloudfront:
+      - create_cloudfront_service:
           requires:
             - create_aws_s3_buckets
       - create_aws_instance:
