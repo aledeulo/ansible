@@ -26,13 +26,13 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Deploy S3 bucket
-        command: |
-           aws cloudformation deploy \
-                --template-file ./deploy_cloud_formation/cf_templates/bucket.yml \
-                --stack-name bucket-stack-${CIRCLE_WORKFLOW_ID:0:5} \
-                --parameter-overrides NAME="my-bucket-${CIRCLE_WORKFLOW_ID}" \
-                --region us-east-1
+          name: Deploy S3 bucket
+          command: |
+              aws cloudformation deploy \
+                    --template-file ./deploy_cloud_formation/cf_templates/bucket.yml \
+                    --stack-name bucket-stack-${CIRCLE_WORKFLOW_ID:0:5} \
+                    --parameter-overrides NAME="my-bucket-${CIRCLE_WORKFLOW_ID}" \
+                    --region us-east-1
       - run:
           name: Copy files
           command: |
