@@ -49,7 +49,15 @@ jobs:
           name: Run ansible playbook
           command: |
             cd ./deploy_cloud_formation/ansible && \
-            ls- l && ansible-playbook -i inventory main-remote.yml
+            ls -l && ansible-playbook -i inventory main-remote.yml
+      - run:
+          name: Rollback cloudformation stack on fail
+          command: |
+              stackName=$(aws cloudformation describe-stacks --query Stacks[0].StackName) && \
+              echo $(stackName) && \
+              aws cloudformation delete-stack --stack-name $(stackName) && \
+              echo "CloudFormation stack cleaning has being triggered. Please check!"
+          when: on_fail
 
 workflows:
   deploy-infrastructure-workflow:
