@@ -63,7 +63,7 @@ jobs:
       - run:
           name: Run ansible playbook
           command: |
-            ls -l && sudo ansible-playbook -i inventory main-remote.yml
+            ls -l && ansible-playbook -i inventory main-remote.yml
       - destroy_environment
 
 workflows:
