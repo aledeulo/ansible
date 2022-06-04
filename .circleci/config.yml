@@ -25,7 +25,7 @@ jobs:
     <<: *aws_docker_image
     steps:
       - checkout
-      -run:
+      - run:
         name: Deploy S3 bucket
         command: |
            aws cloudformation deploy \
