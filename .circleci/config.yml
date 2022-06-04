@@ -36,8 +36,7 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --output text >> inventory 
       - run: |
-          yum install -y tar gzip && \
-          mv inventory ./inventory
+          yum install -y tar gzip
 
       - attach_workspace:
           at: ~/project_<< pipeline.number >>
